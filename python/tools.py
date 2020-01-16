@@ -391,6 +391,44 @@ def extract_bath_params(delta_iw, beta, block_names, n_bath, n_fit=5, fit_gtol=1
     return eps_full, hyb_full
 
 
+def plot_delta_fit(block_gf):
+
+    import matplotlib
+    matplotlib.use('Agg')  # do not plot on x11
+
+    from pytriqs.plot.mpl_interface import oplot, plt
+    from matplotlib.gridspec import GridSpec
+
+    omega_check = 30
+    fig_ext = 'eps'
+
+    plt.figure(figsize=(8, 10))
+    gs = GridSpec(2, 1)
+
+    #
+    # Real part
+    #
+    plt.subplot(gs[0])
+    for block, gf in block_gf:
+        # print(block)
+        oplot(gf, '-o', mode='R', x_window=(0.0, omega_check), name=block)
+    plt.legend(loc=0)
+    plt.xlim(0, omega_check)
+    #
+    # Imaginary part
+    #
+    plt.subplot(gs[1])
+    for block, gf in block_gf:
+        oplot(gf, '-o', mode='I', x_window=(0.0, omega_check), name=block)
+    plt.legend(loc=0)
+    plt.xlim(0, omega_check)
+
+    # filename = basename + fig_ext
+    filename ='delta.' + fig_ext
+    plt.savefig(filename)
+    print(" Output " + filename)
+
+
 def umat2dd(dcore_U):
 
     n_orb = dcore_U.shape[0]/2  # spin-1/2

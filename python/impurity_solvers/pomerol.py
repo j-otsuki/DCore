@@ -26,7 +26,7 @@ from ..pytriqs_gf_compat import *
 # from pytriqs.archive import HDFArchive
 from pytriqs.operators import *
 
-from ..tools import make_block_gf, launch_mpi_subprocesses, extract_H0, extract_bath_params
+from ..tools import make_block_gf, launch_mpi_subprocesses, extract_H0, extract_bath_params, plot_delta_fit
 from .base import SolverBase
 
 VERSION_REQUIRED = 1.4
@@ -188,6 +188,8 @@ class PomerolSolver(SolverBase):
         bath_levels, bath_hyb = extract_bath_params(self._Delta_iw, self.beta, self.block_names, n_bath, **fit_params)
         assert bath_levels.shape == (2*n_bath,)
         assert bath_hyb.shape == (self.n_flavors, 2*n_bath)
+
+        plot_delta_fit(self._Delta_iw)
 
         # Construct (impurity + bath) Hamiltonian matrix of size (L1+L2) times (L1+L2)
         L1 = self.n_flavors
