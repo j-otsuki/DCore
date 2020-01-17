@@ -391,8 +391,7 @@ def extract_bath_params(delta_iw, beta, block_names, n_bath, n_fit=5, fit_gtol=1
     return eps_full, hyb_full
 
 
-def plot_delta_fit(block_gf):
-
+def plot_delta_fit(delta_iw, delta_fit):
     import matplotlib
     matplotlib.use('Agg')  # do not plot on x11
 
@@ -404,22 +403,25 @@ def plot_delta_fit(block_gf):
 
     plt.figure(figsize=(8, 10))
     gs = GridSpec(2, 1)
-
     #
     # Real part
     #
     plt.subplot(gs[0])
-    for block, gf in block_gf:
-        # print(block)
+    for block, gf in delta_iw:
         oplot(gf, '-o', mode='R', x_window=(0.0, omega_check), name=block)
+    for block, gf in delta_fit:
+        oplot(gf, '-D', mode='R', x_window=(0.0, omega_check), name=block)
+
     plt.legend(loc=0)
     plt.xlim(0, omega_check)
     #
     # Imaginary part
     #
     plt.subplot(gs[1])
-    for block, gf in block_gf:
+    for block, gf in delta_iw:
         oplot(gf, '-o', mode='I', x_window=(0.0, omega_check), name=block)
+    for block, gf in delta_fit:
+        oplot(gf, '-D', mode='I', x_window=(0.0, omega_check), name=block)
     plt.legend(loc=0)
     plt.xlim(0, omega_check)
 

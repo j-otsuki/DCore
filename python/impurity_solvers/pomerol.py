@@ -21,6 +21,7 @@ import numpy
 from itertools import product
 import os
 import subprocess
+import math
 
 from ..pytriqs_gf_compat import *
 # from pytriqs.archive import HDFArchive
@@ -80,6 +81,38 @@ def assign_from_numpy_array(g_block, data, block_names):
 
         # copy data in the negative freq side (complex conjugate)
         gf.data[0:n_iw, :, :] = gf_iw_o1_o2.transpose(0, 2, 1)[::-1, :, :].conjugate().copy()
+
+
+def make_delta_fit(gf_struct, block_names, beta, n_iw, bath_levels, bath_hyb):
+    delta_fit = make_block_gf(GfImFreq, gf_struct, beta, n_iw)
+
+    n_blocks = len(block_names)
+    n_bath = bath_levels.shape[0] / n_blocks
+
+    for i, bname in enumerate(block_names):
+        gf = delta_fit[bname]
+        n_orb = gf.data.shape[1]
+        assert gf.data.shape[1] == gf.data.shape[2]
+
+        eps = bath_levels[i*n_bath:(i+1)*n_bath]
+        hyb = bath_hyb[i*n_orb:(i+1)*n_orb, i*n_bath:(i+1)*n_bath]
+
+        # Delta(iw)
+        freqs = numpy.array([1j * (2 * i + 1) * math.pi / beta for i in range(n_iw)])
+
+        # denom[i,j] = (freqs[i] - eps[j])
+        denom = freqs[:, None] - eps[None, :]
+
+        # sum over bath index l
+        delta_opt = numpy.einsum('al, bl, wl->wab', hyb, hyb.conj(), numpy.reciprocal(denom))
+
+        # copy data in the positive freq side
+        gf.data[n_iw:, :, :] = delta_opt.copy()
+
+        # copy data in the negative freq side (complex conjugate)
+        gf.data[0:n_iw, :, :] = delta_opt.transpose(0, 2, 1)[::-1, :, :].conjugate().copy()
+
+    return delta_fit
 
 
 def set_tail(g_block):
@@ -189,7 +222,8 @@ class PomerolSolver(SolverBase):
         assert bath_levels.shape == (2*n_bath,)
         assert bath_hyb.shape == (self.n_flavors, 2*n_bath)
 
-        plot_delta_fit(self._Delta_iw)
+        delta_fit = make_delta_fit(self.gf_struct, self.block_names, self.beta, self.n_iw, bath_levels, bath_hyb)
+        plot_delta_fit(self._Delta_iw, delta_fit)
 
         # Construct (impurity + bath) Hamiltonian matrix of size (L1+L2) times (L1+L2)
         L1 = self.n_flavors
